@@ -1,0 +1,6 @@
+{
+  "appId": "com.rehaboth.uavkit",
+  "appName": "UAV Kit",
+  "webDir": "www",
+  "android": { "backgroundColor": "#0b1220" }
+}

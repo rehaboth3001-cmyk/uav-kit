@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>UAV Kit</title>
+<style>
+  :root{
+    --bg:#0b1220; --panel:#121b2e; --panel2:#18233a; --line:#26324d;
+    --text:#e6ecf7; --muted:#8a97b3; --accent:#ffb020; --accent2:#3ec7ff;
+    --ok:#35d07f; --warn:#ff6b5b; --violet:#b48cff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  header{position:sticky;top:0;z-index:5;background:rgba(11,18,32,.96);
+    border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;
+    display:flex;align-items:center;gap:12px}
+  header button{background:none;border:1px solid var(--line);color:var(--text);
+    border-radius:10px;width:38px;height:38px;font-size:18px;display:none;flex:none}
+  header.sub button{display:block}
+  header h1{font-size:18px;margin:0;letter-spacing:.3px}
+  header small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+  main{padding:16px;max-width:720px;margin:0 auto 40px}
+  .search{width:100%;text-align:left;padding:12px 14px;border-radius:14px;margin-bottom:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:14px;min-height:112px;display:flex;flex-direction:column;gap:4px;
+    color:var(--text);text-align:left;font:inherit;cursor:pointer}
+  .tile:active{transform:scale(.98)}
+  .tile .ic{font-size:24px;margin-bottom:2px}
+  .tile b{font-size:14.5px}
+  .tile span{color:var(--muted);font-size:12.5px}
+  .tile:last-child:nth-child(odd){grid-column:1 / -1;min-height:auto}
+  .sect{color:var(--accent);font-size:12px;letter-spacing:1.2px;text-transform:uppercase;margin:22px 2px 10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+  .field{display:grid;grid-template-columns:1fr 112px 52px;align-items:center;gap:8px;
+    padding:7px 0;border-bottom:1px dashed var(--line)}
+  .field:last-child{border-bottom:0}
+  .field label{font-size:14px}
+  .field label i{display:block;color:var(--muted);font-size:11.5px;font-style:normal}
+  .field.wide{grid-template-columns:1fr 1fr}
+  input,select{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);
+    border-radius:10px;padding:9px 10px;font:inherit;text-align:right}
+  select{text-align:left}
+  input:focus,select:focus{outline:2px solid var(--accent2);border-color:transparent}
+  .unit{color:var(--muted);font-size:12.5px}
+  table.res{width:100%;border-collapse:collapse}
+  table.res td{padding:9px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+  table.res tr:last-child td{border-bottom:0}
+  table.res td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums;
+    font-weight:600;color:var(--accent2);white-space:nowrap}
+  table.res td:nth-child(3){color:var(--muted);width:60px;font-size:12.5px}
+  table.res td small{display:block;color:var(--muted);font-size:11.5px}
+  table.res tr.sh td{color:var(--accent);font-size:11.5px;letter-spacing:1px;text-transform:uppercase;padding-top:14px}
+  .hl td:nth-child(2){color:var(--accent)}
+  .msg{border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:13.5px}
+  .msg.warn{background:rgba(255,107,91,.12);border:1px solid rgba(255,107,91,.4)}
+  .msg.ok{background:rgba(53,208,127,.1);border:1px solid rgba(53,208,127,.35)}
+  .msg.info{background:rgba(62,199,255,.08);border:1px solid rgba(62,199,255,.3);color:#cfe9f7}
+  canvas{width:100%;display:block}
+  .head{color:var(--muted);font-size:11.5px;margin-bottom:6px}
+  .cgrow{display:grid;grid-template-columns:1fr 78px 78px 34px;gap:6px;margin-bottom:6px}
+  .cgrow input{text-align:left}
+  .cgrow input[type=number]{text-align:right}
+  .cgrow button,.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;font:inherit}
+  .btn{padding:10px 14px;width:100%;margin-top:6px}
+  .f{padding:10px 0;border-bottom:1px solid var(--line)}
+  .f:last-child{border-bottom:0}
+  .f b{display:block;font-size:13.5px;margin-bottom:3px}
+  .f code{font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;color:var(--accent2)}
+  .f span{display:block;color:var(--muted);font-size:12px}
+  .foot{color:var(--muted);font-size:12px;text-align:center;margin-top:24px}
+  .empty{color:var(--muted);text-align:center;padding:30px 0}
+  @media (max-width:380px){.field{grid-template-columns:1fr 96px 44px}}
+</style>
+</head>
+<body>
+<header id="hdr">
+  <button id="back" aria-label="Back">&#8592;</button>
+  <h1 id="title">UAV Kit<small>Drone design calculator</small></h1>
+</header>
+<main id="app"></main>
+
+<script src="calc.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const fmt = (v, d = 2) => (v === undefined || v === null || !isFinite(v)) ? '–' :
+  Math.abs(v) >= 1e6 ? v.toExponential(2) : v.toFixed(d);
+const store = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('uav:'+k)); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem('uav:'+k, JSON.stringify(v)); }catch(e){} }
+};
+const SEC = t => ['__sec', t];
+const GROUPS = ['Aerodynamics','Performance','Stability & Structures','Propulsion & Power','Mission Planning','Reference'];
+
+/* common field sets */
+const F_AIRFRAME = [
+  ['mass','All-up mass','kg',2],
+  ['S','Wing area','m²',0.27],
+  ['ar','Aspect ratio','–',8],
+  ['cd0','Zero-lift drag C_D0','–',0.03,'Clean UAV 0.02 to 0.04'],
+  ['e','Oswald efficiency e','–',0.8],
+  ['clMax','C_L max','–',1.2],
+  ['h','Altitude','m',120],
+];
+
+/* =================== TOOLS =================== */
+const TOOLS = {
+/* ---------- Aerodynamics ---------- */
+isa: { icon:'🌡️', name:'Atmosphere (ISA)', sub:'T, p, ρ, a, μ at altitude', group:'Aerodynamics',
+  fields:[['h','Altitude','m',120,'Field elevation + flight height']],
+  run:v=>{ const r=isa(v.h); return { rows:[
+    ['Temperature', fmt(r.T-273.15,2), '°C', fmt(r.T,2)+' K'],
+    ['Pressure', fmt(r.p/100,2), 'hPa'],
+    ['Density ρ', fmt(r.rho,4), 'kg/m³', 'σ = ρ/ρ₀ = '+fmt(r.sigma,3)],
+    ['Speed of sound a', fmt(r.a,1), 'm/s'],
+    ['Dynamic viscosity μ', fmt(r.mu*1e5,4), '×10⁻⁵ Pa·s'],
+  ], msgs: v.h>20000||v.h<0 ? [['warn','Model valid from 0 to 20 000 m.']] : [] }; } },
+
+airfoil: { icon:'🪶', name:'NACA Airfoil', sub:'Shape, α_L0, C_l, C_m (thin airfoil)', group:'Aerodynamics',
+  fields:[
+    ['code','NACA 4-digit code','',"2412",'e.g. 0012, 2412, 4415',null,'text'],
+    ['alpha','Angle of attack α','deg',4],
+    ['ar','Wing aspect ratio','–',8,'For 3D wing lift'],
+    ['e','Oswald efficiency e','–',0.8],
+  ],
+  run:v=>{
+    const c = String(v.code).replace(/\D/g,'');
+    if (c.length!==4) return { rows:[], msgs:[['warn','Enter a 4-digit NACA code such as 2412.']] };
+    const r = naca4({...v, code:c}), msgs=[];
+    if (r.t>0.21) msgs.push(['info','Very thick section: thin airfoil theory loses accuracy.']);
+    if (Math.abs(v.alpha)>12) msgs.push(['warn','Thin airfoil theory ignores stall. Real sections typically stall around 12 to 16°.']);
+    return { msgs,
+      chart:{ title:'NACA '+c+' profile', equal:true, h:150,
+        series:[{pts:r.shape,color:'--accent2',fill:true},{pts:r.camber,color:'--accent',dash:[5,4],width:1.4}] },
+      rows:[
+        SEC('Geometry'),
+        ['Max camber', fmt(r.m*100,1), '% c', 'at '+fmt(r.p*100,0)+'% chord'],
+        ['Max thickness', fmt(r.tMax*100,1), '% c', 'at '+fmt(r.xT*100,0)+'% chord'],
+        SEC('Thin airfoil theory (2D)'),
+        ['Zero-lift angle α_L0', fmt(r.aL0,2), 'deg', '', true],
+        ['Lift coefficient C_l', fmt(r.cl2d,3), '–', 'C_l = 2π(α − α_L0)', true],
+        ['Moment coeff. C_m,c/4', fmt(r.cm4,4), '–', 'Constant with α (aerodynamic centre at c/4)'],
+        SEC('Finite wing (3D)'),
+        ['Lift slope a', fmt(r.a3d,4), '/deg', '2D: '+fmt(2*Math.PI*Math.PI/180,4)+' /deg'],
+        ['Wing C_L', fmt(r.CL3d,3), '–', '', true],
+      ]};
+  } },
+
+wing: { icon:'🛩️', name:'Wing Sizing', sub:'Area, span, chord, loading, Re', group:'Aerodynamics',
+  fields:[
+    ['mass','All-up mass','kg',2],
+    ['vStall','Stall speed','m/s',10,'Landing speed ≈ 1.2 × this'],
+    ['clMax','C_L max','–',1.2,'Flat-bottom airfoil ≈ 1.2 to 1.4'],
+    ['ar','Aspect ratio','–',8,'Trainer 6, glider 12+'],
+    ['vCruise','Cruise speed','m/s',16],
+    ['h','Altitude','m',120],
+  ],
+  run:v=>{ const r=wingSizing(v), msgs=[];
+    if (r.Re<1e5) msgs.push(['warn','Re below 100 000: low-Re regime, expect laminar separation. Pick a low-Re airfoil (e.g. SD7037, S1223).']);
+    if (r.clCruise>0.8) msgs.push(['warn','Cruise C_L is high. Increase wing area or cruise speed.']);
+    if (r.wingLoadingG<30) msgs.push(['info','Very light wing loading: floaty, sensitive to gusts.']);
+    if (r.wingLoadingG>100) msgs.push(['info','High wing loading: fast, needs a longer takeoff run.']);
+    return { msgs, rows:[
+      ['Weight W', fmt(r.W,2), 'N'],
+      ['Wing area S', fmt(r.S,4), 'm²', fmt(r.S*1e4,0)+' cm²', true],
+      ['Wingspan b', fmt(r.b*1000,0), 'mm', '', true],
+      ['Mean chord c', fmt(r.c*1000,0), 'mm', '', true],
+      ['Wing loading', fmt(r.wingLoading,1), 'N/m²', fmt(r.wingLoadingG,1)+' g/dm²'],
+      ['Cruise C_L', fmt(r.clCruise,3), '–'],
+      ['Reynolds no. (cruise)', fmt(r.Re/1000,0), '×10³'],
+    ]}; } },
+
+/* ---------- Performance ---------- */
+perf: { icon:'📈', name:'Range & Endurance', sub:'L/D, power curve, flight time', group:'Performance',
+  fields:[...F_AIRFRAME,
+    ['capAh','Battery capacity','Ah',5],
+    ['volts','Battery voltage','V',11.1,'3S LiPo = 11.1 V'],
+    ['dod','Usable fraction','–',0.8],
+    ['eta','Total efficiency','–',0.5,'prop × motor × ESC'],
+  ],
+  run:v=>{ const r=fixedWingPerf(v), msgs=[], vSafe=1.2*r.vStall;
+    if (r.vMp<vSafe) msgs.push(['warn',`Best-endurance speed (${fmt(r.vMp,1)} m/s) is below 1.2 × V_stall (${fmt(vSafe,1)} m/s). Real loiter must be flown faster, so endurance will be lower than shown.`]);
+    return { msgs,
+      chart:{ title:'Power required vs airspeed', xlab:'m/s', ylab:'W', series:[{pts:r.curve}],
+        marks:[[r.vMp,r.pMp,'V_mp'],[r.vMd,r.pMd,'V_md']], shade:[r.curve[0][0],vSafe,'stall zone'] },
+      rows:[
+        ['Max L/D', fmt(r.LDmax,1), '–', 'k = '+fmt(r.k,4), true],
+        ['Stall speed', fmt(r.vStall,1), 'm/s'],
+        ['Best endurance speed V_mp', fmt(r.vMp,1), 'm/s', 'Min power: '+fmt(r.pMp,1)+' W'],
+        ['Best range speed V_md', fmt(r.vMd,1), 'm/s', 'Min drag, C_L = '+fmt(r.clMd,3)],
+        ['Usable energy', fmt(r.energyWh,1), 'Wh'],
+        ['Max endurance', fmt(r.endurMp,0), 'min', 'at V_mp', true],
+        ['Max range', fmt(r.rangeMd,1), 'km', 'at V_md, no wind', true],
+      ]}; } },
+
+climb: { icon:'⛰️', name:'Climb & Glide', sub:'Rate of climb, V_max, glide range', group:'Performance',
+  fields:[...F_AIRFRAME,
+    ['pMax','Max electrical power','W',250,'Full-throttle V × I'],
+    ['eta','Total efficiency','–',0.5],
+    ['hGlide','Glide start height','m',100,'Above ground, motor off'],
+  ],
+  run:v=>{ const r=climbGlide(v), msgs=[];
+    if (!(r.rocMax>0)) msgs.push(['warn','Not enough power to climb at any speed. Increase power or reduce weight/drag.']);
+    else if (r.rocMax<2) msgs.push(['info','Climb rate under 2 m/s is sluggish for a UAV.']);
+    if (r.vMp < 1.2*r.vS) msgs.push(['info','Min-sink speed is limited by the 1.2 × V_stall safety margin.']);
+    return { msgs,
+      chart:{ title:'Rate of climb vs airspeed', xlab:'m/s', ylab:'m/s', zero:true, series:[{pts:r.curve}],
+        marks: r.rocMax>0 ? [[r.vY,r.rocMax,'V_y']] : [] },
+      rows:[
+        SEC('Powered'),
+        ['Power available', fmt(r.pAv,0), 'W', 'η × P_elec'],
+        ['Max rate of climb', fmt(r.rocMax,2), 'm/s', fmt(r.rocMax*60,0)+' m/min', true],
+        ['Best climb speed V_y', fmt(r.vY,1), 'm/s'],
+        ['Max climb angle', fmt(r.gammaMax,1), 'deg', 'at '+fmt(r.vX,1)+' m/s'],
+        ['Max level speed', fmt(r.vMax,1), 'm/s', fmt(r.vMax*3.6,0)+' km/h', true],
+        SEC('Gliding (motor off)'),
+        ['Best glide speed', fmt(r.vBg,1), 'm/s', 'Glide ratio '+fmt(r.ldBg,1)+' : 1'],
+        ['Min sink rate', fmt(r.sinkMin,2), 'm/s', 'at '+fmt(r.vMs,1)+' m/s'],
+        ['Glide range', fmt(r.glideRange,2), 'km', 'from '+v.hGlide+' m, still air', true],
+        ['Max glide time', fmt(r.glideTime,1), 'min', 'at min sink'],
+      ]}; } },
+
+turn: { icon:'🔄', name:'Turn Performance', sub:'Load factor, radius, turn rate', group:'Performance',
+  fields:[...F_AIRFRAME,
+    ['V','Airspeed','m/s',15],
+    ['bank','Bank angle','deg',30],
+  ],
+  run:v=>{ if (v.bank<=0||v.bank>=89) return {rows:[],msgs:[['warn','Bank angle must be between 0 and 89°.']]};
+    const r=turnPerf(v), msgs=[];
+    if (r.clReq>v.clMax) msgs.push(['warn',`Required C_L (${fmt(r.clReq,2)}) exceeds C_L max: the aircraft stalls in this turn. Fly faster or bank less.`]);
+    else if (v.V < 1.2*r.vSturn) msgs.push(['warn','Airspeed is within 20% of the turning stall speed.']);
+    else msgs.push(['ok','Turn is within the lift limit.']);
+    return { msgs, rows:[
+      ['Load factor n', fmt(r.n,2), 'g', 'n = 1 / cos φ', true],
+      ['Turn radius', fmt(r.R,1), 'm', '', true],
+      ['Turn rate', fmt(r.omega,1), 'deg/s', '360° in '+fmt(r.t360,1)+' s'],
+      ['Stall speed in turn', fmt(r.vSturn,1), 'm/s', 'Level: '+fmt(r.vS,1)+' m/s'],
+      ['C_L required', fmt(r.clReq,3), '–'],
+      ['Power required (turn)', fmt(r.pTurn,1), 'W', 'Level flight: '+fmt(r.pLevel,1)+' W'],
+    ]}; } },
+
+vn: { icon:'📐', name:'V-n Diagram', sub:'Flight envelope & manoeuvre speed', group:'Performance',
+  fields:[
+    ['mass','All-up mass','kg',2], ['S','Wing area','m²',0.27],
+    ['clMax','C_L max','–',1.2], ['clMin','C_L min (negative)','–',-0.8],
+    ['nPos','Positive limit load','g',3.8,'CS-23 normal: 3.8'], ['nNeg','Negative limit load','g',-1.5],
+    ['vC','Cruise speed V_C','m/s',22], ['vdF','Dive factor V_D / V_C','–',1.4,'CS-23: at least 1.4'], ['h','Altitude','m',120],
+  ],
+  run:v=>{ const r=vnDiagram(v), msgs=[];
+    if (r.vA>r.vC) msgs.push(['info','Manoeuvre speed V_A is above V_C: full control deflection is not safe at cruise. Consider a higher V_C or lower wing loading.']);
+    return { msgs,
+      chart:{ title:'Manoeuvring envelope', xlab:'m/s', ylab:'n', zero:true, h:240,
+        series:[{pts:r.env,color:'--accent2',fill:true}],
+        marks:[[r.vS,1,'V_S'],[r.vA,v.nPos,'V_A'],[r.vC,v.nPos,'V_C'],[r.vD,v.nPos,'V_D']] },
+      rows:[
+        ['Stall speed V_S (1 g)', fmt(r.vS,1), 'm/s'],
+        ['Manoeuvre speed V_A', fmt(r.vA,1), 'm/s', 'V_S × √n_max', true],
+        ['Cruise speed V_C', fmt(r.vC,1), 'm/s'],
+        ['Dive speed V_D', fmt(r.vD,1), 'm/s', '', true],
+        ['Negative stall (−1 g)', fmt(r.vSn,1), 'm/s'],
+        ['Negative corner V_G', fmt(r.vG,1), 'm/s'],
+        ['Ultimate load (×1.5)', fmt(v.nPos*1.5,2), 'g', 'Design structure to this'],
+      ]}; } },
+
+takeoff: { icon:'🛫', name:'Takeoff & Landing', sub:'Ground roll distances', group:'Performance',
+  fields:[...F_AIRFRAME,
+    ['clG','Ground-roll C_L','–',0.4,'Wing lift during roll'],
+    ['T0','Static thrust','N',12,'From Motor & Prop tool'],
+    ['vPitch','Prop pitch speed','m/s',30,'Thrust → 0 at this speed'],
+    ['mu','Rolling friction μ','–',0.04,'Tarmac 0.03, grass 0.08 to 0.1'],
+    ['muB','Landing friction μ','–',0.1,'No brakes ≈ rolling friction'],
+  ],
+  run:v=>{ const r=takeoffLanding(v), msgs=[];
+    if (!r.ok) msgs.push(['warn',`Cannot reach lift-off speed (${fmt(r.vLO,1)} m/s): stuck at ${fmt(r.vReached,1)} m/s. Need more thrust or a hand/catapult launch.`]);
+    if (r.tw>=1) msgs.push(['info','T/W ≥ 1: can also climb vertically or be hand-launched easily.']);
+    return { msgs, rows:[
+      ['Thrust-to-weight', fmt(r.tw,2), '–'],
+      SEC('Takeoff'),
+      ['Lift-off speed', fmt(r.vLO,1), 'm/s', '1.1 × V_S'],
+      ['Ground roll', r.ok?fmt(r.sTO,1):'–', 'm', '', true],
+      ['Time to lift-off', r.ok?fmt(r.tTO,1):'–', 's'],
+      SEC('Landing'),
+      ['Approach speed', fmt(r.vApp,1), 'm/s', '1.3 × V_S'],
+      ['Touchdown speed', fmt(r.vTD,1), 'm/s', '1.15 × V_S'],
+      ['Landing roll', fmt(r.sL,1), 'm', '', true],
+    ]}; } },
+
+/* ---------- Stability & Structures ---------- */
+tail: { icon:'🎯', name:'Tail & Static Margin', sub:'Tail volume, neutral point, SM', group:'Stability & Structures',
+  fields:[
+    ['S','Wing area','m²',0.27], ['c','Wing MAC','m',0.18], ['b','Wingspan','m',1.46], ['ar','Wing aspect ratio','–',8],
+    ['lh','H-tail arm l_h','m',0.6,'Wing AC to tail AC'], ['lv','V-tail arm l_v','m',0.6],
+    ['vh','H-tail volume V_H','–',0.4,'UAV typical 0.35 to 0.5'], ['vv','V-tail volume V_V','–',0.03,'Typical 0.02 to 0.04'],
+    ['arH','H-tail aspect ratio','–',4], ['arV','V-tail aspect ratio','–',1.5],
+    ['xcg','CG position','% MAC',30,'From CG Calculator'], ['eta','Tail efficiency η_t','–',0.9],
+  ],
+  run:v=>{ const r=tailSM(v), msgs=[];
+    if (r.sm<0) msgs.push(['warn','Negative static margin: the aircraft is statically UNSTABLE in pitch. Move the CG forward or enlarge the tail.']);
+    else if (r.sm<5) msgs.push(['warn','Static margin under 5%: marginally stable, twitchy in pitch.']);
+    else if (r.sm>20) msgs.push(['info','Static margin above 20%: very stable but sluggish, needs a lot of elevator.']);
+    else msgs.push(['ok','Static margin in the healthy 5 to 20% band.']);
+    return { msgs, rows:[
+      SEC('Horizontal tail'),
+      ['Area S_h', fmt(r.Sh*1e4,0), 'cm²', '', true],
+      ['Span', fmt(r.bh*1000,0), 'mm'], ['Chord', fmt(r.ch*1000,0), 'mm'],
+      SEC('Vertical tail'),
+      ['Area S_v', fmt(r.Sv*1e4,0), 'cm²', '', true],
+      ['Height', fmt(r.hv*1000,0), 'mm'], ['Chord', fmt(r.cv*1000,0), 'mm'],
+      SEC('Longitudinal stability'),
+      ['Wing lift slope', fmt(r.aw,3), '/rad', 'Helmbold formula'],
+      ['Downwash dε/dα', fmt(r.deda,3), '–'],
+      ['Neutral point', fmt(r.hnp,1), '% MAC', '', true],
+      ['Static margin', fmt(r.sm,1), '% MAC', 'SM = h_np − h_cg', true],
+    ]}; } },
+
+spar: { icon:'🦴', name:'Wing Spar Check', sub:'Bending stress, deflection, mass', group:'Stability & Structures',
+  fields:[
+    ['mass','All-up mass','kg',2], ['n','Design load factor','g',4], ['b','Wingspan','m',1.46],
+    ['sf','Safety factor','–',1.5],
+    ['od','Tube outer diameter','mm',10], ['wall','Wall thickness','mm',1,'Larger than OD/2 means solid rod'],
+    ['mat','Material','',"carbon",'',Object.entries(MATERIALS).map(([k,m])=>[k,m.name])],
+  ],
+  run:v=>{ const r=spar(v), msgs=[];
+    if (r.ms<0) msgs.push(['warn','Negative margin of safety: the spar fails at the design load. Use a bigger or thicker tube.']);
+    else msgs.push(['ok',`Spar passes with margin of safety ${fmt(r.ms,2)}.`]);
+    if (r.deflPct>5) msgs.push(['info','Tip deflection above 5% of semi-span: wing will flex visibly.']);
+    msgs.push(['info','Assumes one tube carries all bending, elliptic lift, fixed at the root.']);
+    return { msgs, rows:[
+      ['Root bending moment', fmt(r.Mroot,2), 'N·m', 'M = nWb / 3π'],
+      ['Max bending stress', fmt(r.sigma/1e6,1), 'MPa', '', true],
+      ['Allowable stress', fmt(r.allow/1e6,0), 'MPa'],
+      ['Margin of safety', fmt(r.ms,2), '–', 'σ_allow / (SF·σ) − 1', true],
+      ['Tip deflection', fmt(r.defl*1000,1), 'mm', fmt(r.deflPct,1)+'% of semi-span'],
+      ['Spar mass (full span)', fmt(r.sparMass*1000,0), 'g'],
+    ]}; } },
+
+/* ---------- Propulsion & Power ---------- */
+motor: { icon:'⚙️', name:'Motor & Propeller', sub:'RPM, pitch speed, static thrust', group:'Propulsion & Power',
+  fields:[
+    ['kv','Motor Kv','rpm/V',1000], ['volts','Battery voltage','V',11.1],
+    ['amps','Full-throttle current','A',30],
+    ['propIn','Prop diameter','in',10], ['pitchIn','Prop pitch','in',5],
+    ['etaM','Motor efficiency','–',0.8], ['fm','Prop figure of merit','–',0.65], ['h','Altitude','m',120],
+  ],
+  run:v=>{ const r=motorProp(v), msgs=[];
+    if (r.tipMach>0.7) msgs.push(['warn','Prop tip Mach above 0.7: noisy and inefficient. Use a smaller prop or lower Kv.']);
+    msgs.push(['info','Rule of thumb: pitch speed of about 2.5 to 3 × stall speed gives good climb for a fixed-wing.']);
+    return { msgs, rows:[
+      ['No-load RPM', fmt(r.rpmNL,0), 'rpm', 'Kv × V'],
+      ['Loaded RPM (est.)', fmt(r.rpm,0), 'rpm', '≈ 80% of no-load'],
+      ['Pitch speed', fmt(r.pitchSpeed,1), 'm/s', fmt(r.pitchSpeed*3.6,0)+' km/h', true],
+      ['Electrical power', fmt(r.pE,0), 'W'], ['Shaft power', fmt(r.pS,0), 'W'],
+      ['Static thrust (est.)', fmt(r.Tg,0), 'g', fmt(r.T,2)+' N', true],
+      ['Efficiency', fmt(r.gPerW,2), 'g/W'],
+      ['Prop tip Mach', fmt(r.tipMach,3), '–'],
+      ['Pitch / diameter', fmt(r.pitchRatio,2), '–', 'Low (<0.6) = thrust, high = speed'],
+    ]}; } },
+
+multi: { icon:'🚁', name:'Multirotor Hover', sub:'Power, current, flight time', group:'Propulsion & Power',
+  fields:[
+    ['mass','All-up mass','kg',1.5,'Incl. battery & payload'], ['n','Number of rotors','–',4],
+    ['propIn','Prop diameter','in',10], ['fm','Figure of merit','–',0.65,'Small props 0.5 to 0.7'],
+    ['etaElec','Motor × ESC eff.','–',0.8], ['maxThrustG','Max thrust / motor','g',900,'From motor datasheet'],
+    ['h','Altitude','m',120], ['capAh','Battery capacity','Ah',5],
+    ['volts','Battery voltage','V',14.8,'4S LiPo = 14.8 V'], ['dod','Usable fraction','–',0.8],
+  ],
+  run:v=>{ const r=multirotor(v), msgs=[];
+    if (r.tw<1.8) msgs.push(['warn',`Thrust-to-weight is ${fmt(r.tw,2)}. Aim for 2 or more for safe control margin.`]);
+    else msgs.push(['ok',`Thrust-to-weight ${fmt(r.tw,2)}: good control margin.`]);
+    msgs.push(['info','Hover only. Forward flight, wind and manoeuvring typically cut real flight time by 15 to 25%.']);
+    return { msgs, rows:[
+      ['Thrust per rotor', fmt(r.T/9.80665*1000,0), 'g', fmt(r.T,2)+' N'],
+      ['Disk area per rotor', fmt(r.A*1e4,1), 'cm²'], ['Disk loading', fmt(r.diskLoading,1), 'N/m²'],
+      ['Induced velocity v_i', fmt(r.vInduced,2), 'm/s'],
+      ['Ideal power / rotor', fmt(r.pIdeal,1), 'W'], ['Shaft power / rotor', fmt(r.pShaft,1), 'W'],
+      ['Total electrical power', fmt(r.pElec,0), 'W', '', true],
+      ['Hover current', fmt(r.current,1), 'A'],
+      ['Hover flight time', fmt(r.endurance,1), 'min', '', true],
+    ]}; } },
+
+batt: { icon:'🔋', name:'Battery', sub:'Voltage, energy, C-rating', group:'Propulsion & Power',
+  fields:[
+    ['cells','Cells in series (S)','S',4],
+    ['chem','Chemistry','',"lipo",'',[['lipo','LiPo'],['liion','Li-ion']]],
+    ['capmAh','Capacity','mAh',5000], ['cRate','C-rating','C',50],
+    ['avgA','Average current','A',20], ['massG','Pack mass','g',550],
+  ],
+  run:v=>{ const r=battery(v), msgs=[];
+    if (v.avgA>r.maxA) msgs.push(['warn','Average current exceeds the pack C-rating limit.']);
+    return { msgs, rows:[
+      ['Nominal voltage', fmt(r.V,1), 'V', 'Full '+fmt(r.vFull,1)+' V, empty '+fmt(r.vEmpty,1)+' V'],
+      ['Energy', fmt(r.Wh,1), 'Wh', '', true],
+      ['Max continuous current', fmt(r.maxA,0), 'A'],
+      ['Flight time (80% usable)', fmt(r.time80,1), 'min', 'at average current', true],
+      ['Specific energy', fmt(r.specE,0), 'Wh/kg', 'LiPo ~130 to 180, Li-ion ~200 to 260'],
+    ]}; } },
+
+mass: { icon:'🧮', name:'Mass Budget', sub:'Size the whole UAV from the mission', group:'Propulsion & Power',
+  fields:[
+    ['payload','Payload mass','kg',0.5], ['avionics','Avionics mass','kg',0.3,'FC, GPS, radio, servos'],
+    ['fS','Structure fraction','–',0.35,'Typical 0.30 to 0.40'], ['fP','Propulsion fraction','–',0.10,'Motor, ESC, prop'],
+    ['V','Cruise speed','m/s',16], ['LD','Cruise L/D','–',10],
+    ['eta','Total efficiency','–',0.5], ['endur','Required endurance','min',60],
+    ['eSpec','Battery specific energy','Wh/kg',150], ['reserve','Energy reserve','–',0.2],
+  ],
+  run:v=>{ const r=massBudget(v), msgs=[];
+    if (r.den<=0) return { msgs:[['warn',`Mission not feasible: fractions add to ${fmt((1-r.den)*100,0)}% of take-off mass. Reduce endurance, improve L/D, or use a better battery.`]],
+      rows:[['Battery fraction needed', fmt(r.fB*100,1), '%']] };
+    if (r.fB>0.45) msgs.push(['info','Battery is over 45% of take-off mass: design is very sensitive to estimates.']);
+    else msgs.push(['ok','Mission closes. Use the take-off mass in the other tools.']);
+    return { msgs, rows:[
+      ['Take-off mass', fmt(r.m,2), 'kg', '', true],
+      SEC('Breakdown'),
+      ['Payload + avionics', fmt(v.payload+v.avionics,2), 'kg'],
+      ['Structure', fmt(r.mS,2), 'kg'], ['Propulsion', fmt(r.mP,2), 'kg'],
+      ['Battery', fmt(r.mB,2), 'kg', fmt(r.fB*100,1)+'% of take-off mass', true],
+      ['Battery energy', fmt(r.Wh,0), 'Wh'],
+      ['Cruise electrical power', fmt(r.pCruise,0), 'W'],
+    ]}; } },
+
+/* ---------- Mission Planning ---------- */
+survey: { icon:'🗺️', name:'Mapping Survey', sub:'GSD, overlap, photos, flight time', group:'Mission Planning',
+  fields:[
+    ['sw','Sensor width','mm',13.2,'1-inch sensor = 13.2'], ['f','Focal length','mm',8.8],
+    ['imgW','Image width','px',5472], ['imgH','Image height','px',3648],
+    ['alt','Flight altitude AGL','m',100], ['fo','Front overlap','%',75], ['so','Side overlap','%',65],
+    ['V','Ground speed','m/s',10], ['L','Area length','m',500], ['Wd','Area width','m',300],
+  ],
+  run:v=>{ const r=survey(v), msgs=[];
+    if (r.interval<2) msgs.push(['warn','Photo interval under 2 s: many cameras cannot trigger this fast. Fly slower or higher.']);
+    if (v.fo<70||v.so<60) msgs.push(['info','For photogrammetry, 70 to 80% front and 60 to 70% side overlap is recommended.']);
+    const pts=[]; for (let i=0;i<r.lines;i++){ const y=Math.min(i*r.line, v.Wd + r.line*0); const a=[0,y],b=[v.L,y]; if(i%2){pts.push(b,a);}else{pts.push(a,b);} }
+    return { msgs,
+      chart:{ title:'Flight lines over the area', equal:true, h:200, xlab:'m',
+        series:[{pts:[[0,0],[v.L,0],[v.L,v.Wd],[0,v.Wd],[0,0]],color:'--muted',width:1,dash:[4,4]},{pts,color:'--accent'}] },
+      rows:[
+        ['Ground sample distance', fmt(r.gsd,2), 'cm/px', '', true],
+        ['Image footprint', fmt(r.fw,0)+' × '+fmt(r.fh,0), 'm'],
+        ['Photo spacing', fmt(r.spacing,1), 'm', 'Trigger every '+fmt(r.interval,1)+' s'],
+        ['Line spacing', fmt(r.line,1), 'm'],
+        ['Flight lines', fmt(r.lines,0), '–'],
+        ['Photos', fmt(r.photos,0), '–', '', true],
+        ['Path length', fmt(r.path/1000,2), 'km'],
+        ['Flight time', fmt(r.time,1), 'min', 'Excludes turns, takeoff, landing', true],
+      ]}; } },
+
+link: { icon:'📡', name:'Radio Link Budget', sub:'Control & telemetry range', group:'Mission Planning',
+  fields:[
+    ['fMHz','Frequency','MHz',2400,'433, 868/915, 2400, 5800'], ['ptx','Transmit power','dBm',20,'100 mW = 20 dBm'],
+    ['gt','Tx antenna gain','dBi',2], ['gr','Rx antenna gain','dBi',2],
+    ['sens','Receiver sensitivity','dBm',-95], ['margin','Fade margin','dB',10,'10 to 20 dB recommended'],
+    ['hDrone','Drone altitude','m',120], ['hGnd','Ground antenna height','m',2],
+  ],
+  run:v=>{ const r=linkBudget(v), msgs=[];
+    msgs.push(r.limit==='link' ? ['info','Range is limited by signal strength, not the horizon.'] : ['info','Range is limited by the radio horizon: fly higher or raise the ground antenna.']);
+    msgs.push(['info','Check your local regulator for legal power and visual line-of-sight limits.']);
+    return { msgs, rows:[
+      ['Link budget', fmt(r.budget,0), 'dB', 'P_tx + G_t + G_r − Sens − margin'],
+      ['Free-space range', fmt(r.dLink,2), 'km'],
+      ['Radio horizon', fmt(r.dHor,1), 'km'],
+      ['Usable range', fmt(r.d,2), 'km', '', true],
+      ['Fresnel zone radius', fmt(r.fres,1), 'm', 'Keep 60% of this clear of obstacles at mid-path'],
+    ]}; } },
+
+wind: { icon:'🧭', name:'Wind Triangle', sub:'Heading, crab angle, groundspeed', group:'Mission Planning',
+  fields:[
+    ['tas','Airspeed','m/s',16], ['ws','Wind speed','m/s',5],
+    ['wdir','Wind FROM direction','deg',90,'Meteorological convention'],
+    ['track','Desired track','deg',0], ['dist','Leg distance','km',5],
+  ],
+  run:v=>{ const r=windTri(v), msgs=[];
+    if (!r.out) return { rows:[], msgs:[['warn','Crosswind is stronger than airspeed: this track cannot be held.']] };
+    if (!(r.back && r.back.gs>0) || r.out.gs<=0) msgs.push(['warn','Headwind exceeds airspeed on one leg: the UAV cannot make progress.']);
+    if (v.ws/v.tas>0.5) msgs.push(['warn','Wind above 50% of airspeed: return trip may drain the battery. Plan to fly the upwind leg first.']);
+    return { msgs, rows:[
+      SEC('Outbound leg'),
+      ['Headwind', fmt(r.out.head,1), 'm/s', 'Negative = tailwind'],
+      ['Crosswind', fmt(r.out.cross,1), 'm/s', '+ from right, − from left'],
+      ['Wind correction angle', fmt(r.out.wca,1), 'deg'],
+      ['Heading to fly', fmt(r.out.hdg,0), 'deg', '', true],
+      ['Groundspeed', fmt(r.out.gs,1), 'm/s', '', true],
+      SEC('Round trip'),
+      ['Outbound time', fmt(r.tOut,1), 'min'],
+      ['Return time', fmt(r.tBack,1), 'min', r.back?'Heading '+fmt(r.back.hdg,0)+'°, GS '+fmt(r.back.gs,1)+' m/s':''],
+      ['Total time', fmt(r.tOut+r.tBack,1), 'min', 'Still air: '+fmt(r.tCalm,1)+' min', true],
+    ]}; } },
+};
+
+const EXTRA = [
+  ['cg',{icon:'⚖️',name:'CG Calculator',sub:'Balance point & % MAC',group:'Stability & Structures'}],
+  ['units',{icon:'🔁',name:'Unit Converter',sub:'Speed, mass, wing loading…',group:'Reference'}],
+  ['formulas',{icon:'📘',name:'Formula Sheet',sub:'Every equation used here',group:'Reference'}],
+];
+
+/* =================== RENDERING =================== */
+function allTiles(){ return [...Object.entries(TOOLS), ...EXTRA]; }
+
+function home(){
+  setHeader('UAV Kit','Drone design calculator', false);
+  $('#app').innerHTML = `<input class="search" id="q" type="search" placeholder="Search tools (e.g. stall, battery, tail)"><div id="tiles"></div>
+    <div class="foot">${allTiles().length} tools · all calculations run offline on your phone.<br>First-order estimates for design and study, verify before flight.</div>`;
+  const draw = q => {
+    q = q.toLowerCase().trim();
+    let html='';
+    for (const g of GROUPS){
+      const list = allTiles().filter(([id,t])=>t.group===g && (!q || (t.name+' '+t.sub+' '+g).toLowerCase().includes(q)));
+      if (!list.length) continue;
+      html += `<div class="sect">${g}</div><div class="grid">` + list.map(([id,t])=>
+        `<button class="tile" data-go="${id}"><div class="ic">${t.icon}</div><b>${t.name}</b><span>${t.sub}</span></button>`).join('') + '</div>';
+    }
+    $('#tiles').innerHTML = html || '<div class="empty">No tool matches that search.</div>';
+    document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+  };
+  $('#q').oninput = e => draw(e.target.value);
+  draw('');
+}
+
+function setHeader(t, s, sub){
+  $('#title').innerHTML = `${t}<small>${s}</small>`;
+  $('#hdr').classList.toggle('sub', sub);
+}
+function go(id){ history.pushState({id},'','#'+id); route(id); }
+function route(id){
+  window.scrollTo(0,0);
+  if (!id) return home();
+  if (id==='cg') return cgView();
+  if (id==='units') return unitsView();
+  if (id==='formulas') return formulaView();
+  if (TOOLS[id]) return toolView(id);
+  home();
+}
+
+function toolView(id){
+  const t = TOOLS[id];
+  setHeader(t.name, t.sub, true);
+  const saved = store.get(id) || {};
+  let html = '<div class="card">';
+  for (const [k,label,unit,def,hint,opts,type] of t.fields){
+    const val = saved[k] ?? def;
+    const input = opts
+      ? `<select id="f_${k}">${opts.map(([o,l])=>`<option value="${o}" ${o==val?'selected':''}>${l}</option>`).join('')}</select>`
+      : type==='text' ? `<input id="f_${k}" type="text" inputmode="numeric" maxlength="4" value="${val}">`
+      : `<input id="f_${k}" type="number" inputmode="decimal" step="any" value="${val}">`;
+    html += `<div class="field ${opts?'wide':''}"><label>${label}${hint?`<i>${hint}</i>`:''}</label>${input}${opts?'':`<span class="unit">${unit}</span>`}</div>`;
+  }
+  html += '</div><div id="msgs"></div><div id="chartWrap"></div><div class="card"><table class="res" id="res"></table></div>';
+  html += '<button class="btn" id="reset">Reset to defaults</button>';
+  $('#app').innerHTML = html;
+
+  const calc = ()=>{
+    const v = {};
+    for (const [k,, ,def,, opts,type] of t.fields){
+      const el = $('#f_'+k);
+      if (opts || type==='text') v[k] = el.value;
+      else { v[k] = parseFloat(el.value); if (!isFinite(v[k])) v[k] = def; }
+    }
+    store.set(id, v);
+    let out;
+    try { out = t.run(v); } catch(e){ out = {rows:[], msgs:[['warn','Check inputs.']]}; }
+    $('#msgs').innerHTML = (out.msgs||[]).map(([c,m])=>`<div class="msg ${c}">${m}</div>`).join('');
+    $('#res').innerHTML = out.rows.map(r => r[0]==='__sec'
+      ? `<tr class="sh"><td colspan="3">${r[1]}</td></tr>`
+      : `<tr class="${r[4]?'hl':''}"><td>${r[0]}${r[3]?`<small>${r[3]}</small>`:''}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
+    if (out.chart){
+      $('#chartWrap').innerHTML = `<div class="card"><div class="head">${out.chart.title||''}</div><canvas id="cv"></canvas></div>`;
+      drawChart($('#cv'), out.chart);
+    } else $('#chartWrap').innerHTML = '';
+  };
+  document.querySelectorAll('#app input, #app select').forEach(el=>el.addEventListener('input',calc));
+  $('#reset').onclick = ()=>{ store.set(id, null); toolView(id); };
+  calc();
+}
+
+/* ---------- generic chart ---------- */
+function nice(span){ const p=Math.pow(10,Math.floor(Math.log10(span/4))), r=span/4/p; return (r<1.5?1:r<3?2:r<7?5:10)*p; }
+function drawChart(cv, c){
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const dpr = window.devicePixelRatio||1, W = cv.clientWidth, H = c.h||220;
+  cv.style.height = H+'px'; cv.width = W*dpr; cv.height = H*dpr;
+  const g = cv.getContext('2d'); g.scale(dpr,dpr);
+  const L = c.equal?10:44, Rm=12, T=22, B=c.equal?10:30;
+  const all = c.series.flatMap(s=>s.pts);
+  let x0=Math.min(...all.map(p=>p[0])), x1=Math.max(...all.map(p=>p[0]));
+  let y0=Math.min(...all.map(p=>p[1])), y1=Math.max(...all.map(p=>p[1]));
+  if (c.zero){ y0=Math.min(y0,0); y1=Math.max(y1,0); }
+  if (!c.equal){ const pad=(y1-y0)*0.08||1; y1+=pad; if (y0<0||c.zero) y0-= (y0<0?pad:0); else y0=0; }
+  const pw=W-L-Rm, ph=H-T-B;
+  if (c.equal){
+    const sx=pw/(x1-x0), sy=ph/((y1-y0)||1), s=Math.min(sx,sy)*0.94;
+    const cx=(x0+x1)/2, cy=(y0+y1)/2; x0=cx-pw/2/s; x1=cx+pw/2/s; y0=cy-ph/2/s; y1=cy+ph/2/s;
+  }
+  const X=v=>L+(v-x0)/(x1-x0)*pw, Y=v=>T+(1-(v-y0)/(y1-y0))*ph;
+  g.font='11px system-ui'; g.lineWidth=1;
+  if (!c.equal){
+    const sy=nice(y1-y0), sx=nice(x1-x0);
+    g.strokeStyle=css('--line'); g.fillStyle=css('--muted');
+    for (let v=Math.ceil(y0/sy)*sy; v<=y1; v+=sy){ g.beginPath(); g.moveTo(L,Y(v)); g.lineTo(W-Rm,Y(v)); g.stroke(); g.fillText(+v.toFixed(6)+'',4,Y(v)+4); }
+    for (let v=Math.ceil(x0/sx)*sx; v<=x1; v+=sx){ g.fillText(+v.toFixed(6)+'',X(v)-6,H-12); }
+    if (c.xlab) g.fillText(c.xlab,W-Rm-26,H-1);
+    if (c.ylab) g.fillText(c.ylab,4,12);
+    if (c.zero && y0<0){ g.strokeStyle=css('--muted'); g.beginPath(); g.moveTo(L,Y(0)); g.lineTo(W-Rm,Y(0)); g.stroke(); }
+  }
+  if (c.shade && c.shade[1]>x0){
+    g.fillStyle='rgba(255,107,91,.12)'; g.fillRect(X(Math.max(c.shade[0],x0)),T,X(c.shade[1])-X(Math.max(c.shade[0],x0)),ph);
+    g.fillStyle=css('--warn'); g.fillText(c.shade[2],X(Math.max(c.shade[0],x0))+4,T+12);
+  }
+  for (const s of c.series){
+    const col = css(s.color||'--accent2');
+    g.beginPath(); s.pts.forEach(([x,y],i)=> i?g.lineTo(X(x),Y(y)):g.moveTo(X(x),Y(y)));
+    if (s.fill){ g.fillStyle=col+'22'; g.fill(); }
+    g.setLineDash(s.dash||[]); g.strokeStyle=col; g.lineWidth=s.width||2.2; g.stroke(); g.setLineDash([]);
+  }
+  for (const [x,y,lab] of (c.marks||[])){
+    g.fillStyle=css('--accent'); g.beginPath(); g.arc(X(x),Y(y),4.5,0,7); g.fill();
+    g.fillText(lab, X(x)-12, Y(y)-9);
+  }
+}
+
+/* ---------- CG calculator ---------- */
+function cgView(){
+  setHeader('CG Calculator','Balance point & % MAC', true);
+  const saved = store.get('cg') || { macLE:150, mac:200, items:[
+    ['Motor',120,20],['Battery',300,110],['Wing',250,180],['Fuselage + tail',280,260],['Payload',150,140]] };
+  const row = ([n,m,x]) => `<div class="cgrow"><input value="${n}"><input type="number" inputmode="decimal" value="${m}"><input type="number" inputmode="decimal" value="${x}"><button class="del" aria-label="Remove">✕</button></div>`;
+  $('#app').innerHTML = `
+    <div class="msg info">Measure every x from the same datum (e.g. the nose or firewall), positive towards the tail.</div>
+    <div class="card">
+      <div class="cgrow head"><span>Component</span><span>Mass (g)</span><span>x (mm)</span><span></span></div>
+      <div id="rows">${saved.items.map(row).join('')}</div>
+      <button class="btn" id="add">+ Add component</button>
+    </div>
+    <div class="card">
+      <div class="field"><label>MAC leading edge<i>x of the MAC leading edge from datum</i></label><input id="macLE" type="number" inputmode="decimal" value="${saved.macLE}"><span class="unit">mm</span></div>
+      <div class="field"><label>MAC length<i>Rectangular wing: MAC = chord</i></label><input id="mac" type="number" inputmode="decimal" value="${saved.mac}"><span class="unit">mm</span></div>
+    </div>
+    <div id="msgs"></div>
+    <div class="card"><table class="res" id="res"></table></div>`;
+  const calc=()=>{
+    const items=[...document.querySelectorAll('#rows .cgrow')].map(r=>{const i=r.querySelectorAll('input');return [i[0].value, parseFloat(i[1].value)||0, parseFloat(i[2].value)||0];});
+    const macLE=parseFloat($('#macLE').value)||0, mac=parseFloat($('#mac').value)||0;
+    store.set('cg',{items,macLE,mac});
+    const r=cg(items.map(([,m,x])=>({mass:m,x})),macLE,mac);
+    let m=[];
+    if (isFinite(r.pctMac)){
+      if (r.pctMac<15) m=['warn','CG is far forward: very stable but nose-heavy, needs more elevator.'];
+      else if (r.pctMac<=33) m=['ok','CG within the typical 25 to 33% MAC band for conventional aircraft (15 to 25% for flying wings). Check the static margin in Tail & Static Margin.'];
+      else m=['warn','CG is aft of ~33% MAC: risk of pitch instability. Move mass forward.'];
+    }
+    $('#msgs').innerHTML = m.length?`<div class="msg ${m[0]}">${m[1]}</div>`:'';
+    $('#res').innerHTML = `
+      <tr><td>Total mass</td><td>${fmt(r.total,0)}</td><td>g</td></tr>
+      <tr class="hl"><td>CG position<small>from datum</small></td><td>${fmt(r.x,1)}</td><td>mm</td></tr>
+      <tr class="hl"><td>CG location</td><td>${fmt(r.pctMac,1)}</td><td>% MAC</td></tr>`;
+  };
+  const bind=()=>{
+    document.querySelectorAll('#app input').forEach(e=>e.oninput=calc);
+    document.querySelectorAll('.del').forEach(b=>b.onclick=()=>{b.parentElement.remove();calc();});
+  };
+  $('#add').onclick=()=>{ $('#rows').insertAdjacentHTML('beforeend',row(['Item',0,0])); bind(); calc(); };
+  bind(); calc();
+}
+
+/* ---------- Unit converter ---------- */
+function unitsView(){
+  setHeader('Unit Converter','Aviation & drone units', true);
+  const s = store.get('units') || { q:'Speed', val:50, from:'km/h' };
+  $('#app').innerHTML = `<div class="card">
+      <div class="field wide"><label>Quantity</label><select id="uq">${Object.keys(UNITS).map(k=>`<option ${k===s.q?'selected':''}>${k}</option>`).join('')}</select></div>
+      <div class="field wide"><label>Value</label><input id="uv" type="number" inputmode="decimal" step="any" value="${s.val}"></div>
+      <div class="field wide"><label>From unit</label><select id="uf"></select></div>
+    </div><div class="card"><table class="res" id="res"></table></div>`;
+  const fill = keep => {
+    const u = UNITS[$('#uq').value];
+    $('#uf').innerHTML = Object.keys(u).map(k=>`<option ${k===keep?'selected':''}>${k}</option>`).join('');
+  };
+  const calc = () => {
+    const q=$('#uq').value, u=UNITS[q], from=$('#uf').value, val=parseFloat($('#uv').value);
+    store.set('units',{q,val,from});
+    const si = val*u[from];
+    $('#res').innerHTML = Object.entries(u).map(([k,f])=>{
+      const x=si/f, d=Math.abs(x)>=1000?1:Math.abs(x)>=1?3:5;
+      return `<tr class="${k===from?'hl':''}"><td>${k}</td><td>${fmt(x,d)}</td><td></td></tr>`; }).join('');
+  };
+  fill(s.from);
+  $('#uq').oninput = ()=>{ fill(null); calc(); };
+  $('#uf').oninput = calc; $('#uv').oninput = calc;
+  calc();
+}
+
+/* ---------- Formula sheet ---------- */
+function formulaView(){
+  setHeader('Formula Sheet','Equations behind every tool', true);
+  const F = [
+    ['Atmosphere',[
+      ['ISA troposphere (h ≤ 11 km)','T = 288.15 − 0.0065·h\np = 101325·(T/288.15)^5.256','Lapse rate 6.5 K/km'],
+      ['Density & speed of sound','ρ = p / (R·T)    a = √(γ·R·T)','R = 287.05 J/kg·K, γ = 1.4'],
+      ['Sutherland viscosity','μ = 1.458×10⁻⁶ · T^1.5 / (T + 110.4)',''],
+    ]],
+    ['Airfoil & wing',[
+      ['NACA 4-digit thickness','y_t = 5t(0.2969√x − 0.126x − 0.3516x² + 0.2843x³ − 0.1036x⁴)','Closed trailing edge'],
+      ['Thin airfoil theory','C_l = 2π(α − α_L0)\nα_L0 = −(1/π)∫(dz/dx)(cos θ − 1)dθ','C_m,c/4 = (π/4)(A₂ − A₁)'],
+      ['Finite wing lift slope','a = a₀ / (1 + a₀/(π·e·AR))','Helmbold: a = 2πAR / (2 + √(AR²+4))'],
+      ['Lift','L = ½·ρ·V²·S·C_L',''],
+      ['Wing area from stall','S = 2W / (ρ·V_s²·C_Lmax)',''],
+      ['Span & chord','b = √(AR·S)    c = S / b',''],
+      ['Reynolds number','Re = ρ·V·c / μ','Small UAVs: 10⁵ to 5×10⁵'],
+    ]],
+    ['Performance',[
+      ['Drag polar','C_D = C_D0 + k·C_L²    k = 1/(π·e·AR)',''],
+      ['Max L/D','(L/D)max = 1 / (2√(C_D0·k))','At C_L = √(C_D0/k)'],
+      ['Power required','P = ½ρV³S·C_D0 + 2k·n²W² / (ρVS)','Parasite + induced (n = load factor)'],
+      ['Best endurance speed','V_mp = V_md / 3^¼','C_L = √(3·C_D0/k)'],
+      ['Electric range','R = (E·η / W)·(L/D)','Max at V_md'],
+      ['Rate of climb','RoC = (P_avail − P_req) / W',''],
+      ['Glide','Range = h·(L/D)    sink = P_req / W',''],
+      ['Level turn','n = 1/cos φ    R = V²/(g·tan φ)    ω = g·tan φ / V',''],
+      ['V-n diagram','n = ρV²S·C_Lmax / (2W)    V_A = V_S·√n_max',''],
+      ['Ground roll','m·dV/dt = T − D − μ(W − L)','Integrated numerically to V_LO = 1.1 V_S'],
+    ]],
+    ['Stability & structures',[
+      ['Tail volume coefficients','V_H = S_h·l_h / (S·c)    V_V = S_v·l_v / (S·b)',''],
+      ['Neutral point','h_np = h_ac + η·V_H·(a_t/a_w)·(1 − dε/dα)','dε/dα ≈ 2a_w / (π·AR)'],
+      ['Static margin','SM = h_np − h_cg','Healthy: 5 to 20% MAC'],
+      ['Centre of gravity','x_cg = Σ(mᵢ·xᵢ) / Σmᵢ','%MAC = (x_cg − x_LE) / MAC'],
+      ['Root bending (elliptic lift)','M = n·W·b / (3π)','σ = M·y / I'],
+      ['Tube inertia','I = π(D⁴ − d⁴) / 64',''],
+    ]],
+    ['Propulsion & power',[
+      ['Ideal hover power','P_i = T^1.5 / √(2ρA)','Momentum theory'],
+      ['Induced velocity','v_i = √(T / (2ρA))',''],
+      ['Static thrust','T = (FM·P_shaft)^⅔ · (2ρA)^⅓',''],
+      ['Pitch speed','V_p = RPM · pitch / 60','RPM ≈ 0.8 · Kv · V'],
+      ['Battery','E = V_nom · C(Ah)    I_max = C-rate · C(Ah)','LiPo 3.7 V/cell'],
+      ['Mass budget','m = (m_pay + m_av) / (1 − f_s − f_p − f_b)','f_b = g·V·t / ((L/D)·η·e*·(1 − reserve))'],
+    ]],
+    ['Mission planning',[
+      ['Ground sample distance','GSD = s_w · h / (f · W_px)',''],
+      ['Free-space path loss','FSPL(dB) = 20log d(km) + 20log f(MHz) + 32.44',''],
+      ['Radio horizon','d = 4.12(√h₁ + √h₂) km','h in metres'],
+      ['Wind correction angle','WCA = asin(V_w·sin β / V_a)','GS = V_a·cos WCA − V_w·cos β'],
+    ]],
+  ];
+  $('#app').innerHTML = F.map(([s,list])=>`<div class="sect">${s}</div><div class="card">${
+    list.map(([b,c,n])=>`<div class="f"><b>${b}</b><code>${c.replace(/\n/g,'<br>')}</code>${n?`<span>${n}</span>`:''}</div>`).join('')}</div>`).join('');
+}
+
+$('#back').onclick = ()=> history.back();
+window.onpopstate = () => route(location.hash.slice(1) || null);
+route(location.hash.slice(1) || null);
+</script>
+</body>
+</html>
